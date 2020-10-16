@@ -1,11 +1,12 @@
 import { expect } from 'chai';
-import sinon, { mock } from 'sinon';
+import sinon from 'sinon';
 
 import * as Bridge from '../src/common-bridge';
 import {
   CustomPermissionName,
   CustomPermissionStatus,
 } from '../src/types/custom-permissions';
+import { NativeFetchRequest, NativeFetchResponse } from '../src';
 
 /* tslint:disable:no-any */
 const window: any = {};
@@ -137,6 +138,32 @@ describe('requestCustomPermissions', () => {
         },
       ]
     );
+  });
+});
+
+describe('fetch', () => {
+  const req: NativeFetchRequest = { url: 'test-url' };
+  const testSuccessRes: NativeFetchResponse = {
+    url: 'test-url',
+    ok: true,
+    status: 200,
+    statusText: 'ok',
+    body: [1, 2, 3],
+    headers: { 'Content-Type': 'application/json' },
+  };
+
+  it('should get success response', async () => {
+    const bridge = new Bridge.MiniAppBridge(mockExecutor);
+    mockExecutor.exec.callsArgWith(2, JSON.stringify(testSuccessRes));
+    const res = await bridge.fetch(req);
+    expect(res).deep.equal(testSuccessRes);
+  });
+
+  it('should reject promise with error', () => {
+    const bridge = new Bridge.MiniAppBridge(mockExecutor);
+    const networkError = 'Network error occured';
+    mockExecutor.exec.callsArgWith(3, networkError);
+    expect(bridge.fetch(req)).be.rejectedWith(networkError);
   });
 });
 

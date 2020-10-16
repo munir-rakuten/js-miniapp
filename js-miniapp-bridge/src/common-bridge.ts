@@ -12,6 +12,7 @@ import {
   CustomPermissionResponse,
 } from './types/custom-permissions';
 import { ShareInfoType } from './types/share-info';
+import { NativeFetchRequest, NativeFetchResponse } from './types/fetch';
 import { ScreenOrientation } from './types/screen';
 
 /** @internal */
@@ -25,6 +26,18 @@ export interface Callback {
   onError: (error: string) => void;
 }
 
+type PlatformExecutorAction =
+  | 'getUniqueId'
+  | 'requestPermission'
+  | 'showAd'
+  | 'loadAd'
+  | 'requestCustomPermissions'
+  | 'fetch'
+  | 'getProfilePhoto'
+  | 'getUserName'
+  | 'setScreenOrientation'
+  | 'shareInfo';
+
 /** @internal */
 export interface PlatformExecutor {
   /**
@@ -37,7 +50,7 @@ export interface PlatformExecutor {
    * @param  {[Function]} onError Error callback function
    */
   exec(
-    action: string,
+    action: PlatformExecutorAction,
     param: object | null,
     onSuccess: (value: string) => void,
     onError: (error: string) => void
@@ -273,6 +286,22 @@ export class MiniAppBridge {
         'setScreenOrientation',
         { action: screenAction },
         success => resolve(success),
+        error => reject(error)
+      );
+    });
+  }
+
+  /**
+   * Associating fetch function to MiniAppBridge object.
+   *
+   * @param request request-instance
+   */
+  fetch(request: NativeFetchRequest) {
+    return new Promise<NativeFetchResponse>((resolve, reject) => {
+      return this.executor.exec(
+        'fetch',
+        request,
+        success => resolve(JSON.parse(success) as NativeFetchResponse),
         error => reject(error)
       );
     });

@@ -5,6 +5,12 @@ import {
   CustomPermission,
   CustomPermissionResult,
   ShareInfoType,
+  InternalFetchRequest,
+} from '../../js-miniapp-bridge/src';
+import {
+  FetchResponse,
+  FetchRequestInit,
+  DecodedFetchResponse,
   ScreenOrientation,
 } from '../../js-miniapp-bridge/src';
 
@@ -36,6 +42,15 @@ interface MiniAppFeatures {
    * @returns The Promise of share info action state from injected side.
    */
   shareInfo(info: ShareInfoType): Promise<string>;
+
+  /**
+   * makes the http request at Host application layer.
+   *
+   * @param url Absolute url
+   * @param opts custom request options(will override matching properties of input parameter)
+   * @returns Promise.
+   */
+  fetch(url: string, opts?: FetchRequestInit): Promise<FetchResponse>;
 
   /**
    * Swap and lock the screen orientation.
@@ -173,6 +188,12 @@ export class MiniApp implements MiniAppFeatures, Ad, Platform {
       platform = this.bridge.platform;
     } catch (e) {}
     return platform;
+  }
+
+  fetch(url: string, opts?: FetchRequestInit): Promise<FetchResponse> {
+    return this.bridge
+      .fetch(new InternalFetchRequest(url, opts))
+      .then(res => new DecodedFetchResponse(res));
   }
 
   setScreenOrientation(screenOrientation: ScreenOrientation): Promise<string> {

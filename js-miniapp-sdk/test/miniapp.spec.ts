@@ -9,6 +9,10 @@ import {
   CustomPermissionStatus,
   ScreenOrientation,
 } from '../../js-miniapp-bridge/src';
+import {
+  NativeFetchResponse,
+  FetchRequestInit,
+} from '../../js-miniapp-bridge/src/types/fetch';
 import { MiniApp } from '../src/miniapp';
 
 const window: any = {};
@@ -26,6 +30,7 @@ window.MiniAppBridge = {
   getPlatform: sinon.stub(),
   getUserName: sinon.stub(),
   getProfilePhoto: sinon.stub(),
+  fetch: sinon.stub(),
   setScreenOrientation: sinon.stub(),
 };
 const miniApp = new MiniApp();
@@ -223,6 +228,101 @@ describe('getProfilePhoto', () => {
 
     window.MiniAppBridge.getProfilePhoto.resolves(response);
     return expect(miniApp.user.getProfilePhoto()).to.eventually.equal(response);
+  });
+});
+
+describe('fetch', () => {
+  const resBody = { message: 'Hello!' };
+  const errorResBody = { message: 'no matching data found' };
+  const bridgeSuccessResponse: NativeFetchResponse = {
+    body: Array.from(Buffer.from(JSON.stringify(resBody), 'utf-8')),
+    headers: { 'Content-Type': 'application/json' },
+    ok: true,
+    status: 200,
+    statusText: 'ok',
+    url: 'https://test-url.com',
+  };
+  const bridgeErrorResponse = {
+    body: Array.from(Buffer.from(JSON.stringify(errorResBody), 'utf-8')),
+    headers: { 'Content-Type': 'application/json' },
+    ok: false,
+    status: 400,
+    statusText: 'error',
+    type: 'error',
+    url: 'https://test-url.com',
+  };
+
+  beforeEach(() => {
+    window.MiniAppBridge.fetch.resetHistory();
+  });
+
+  it('should make HTTP GET with string URL', async () => {
+    window.MiniAppBridge.fetch.resolves(bridgeSuccessResponse);
+    const res = await miniApp.fetch(bridgeSuccessResponse.url);
+    const resJson = await res.json();
+    sinon.assert.calledOnceWithExactly(
+      window.MiniAppBridge.fetch,
+      sinon.match({
+        url: bridgeSuccessResponse.url,
+        method: 'GET',
+      })
+    );
+    expect(res.body).be.deep.equal(new Uint8Array(bridgeSuccessResponse.body));
+    expect(resJson).be.deep.equal(resBody);
+  });
+
+  it('should make HTTP GET with options', async () => {
+    window.MiniAppBridge.fetch.resolves(bridgeSuccessResponse);
+    const initOptions: FetchRequestInit = {
+      method: 'GET',
+      headers: bridgeSuccessResponse.headers,
+    };
+    await miniApp.fetch(bridgeSuccessResponse.url, initOptions);
+    sinon.assert.calledOnceWithExactly(
+      window.MiniAppBridge.fetch,
+      sinon.match({
+        url: bridgeSuccessResponse.url,
+        ...initOptions,
+      })
+    );
+  });
+
+  it('should fetch json response', async () => {
+    window.MiniAppBridge.fetch.resolves(bridgeSuccessResponse);
+    const res = await miniApp.fetch(bridgeSuccessResponse.url, {
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const resJson = await res.json();
+    expect(resJson).be.deep.equal(resBody);
+  });
+
+  it('should fetch text response', async () => {
+    window.MiniAppBridge.fetch.resolves(bridgeSuccessResponse);
+    const res = await miniApp.fetch(bridgeSuccessResponse.url);
+    const resText = await res.text();
+    expect(resText).be.deep.equal(JSON.stringify(resBody));
+  });
+
+  it('should fetch buffer response', async () => {
+    window.MiniAppBridge.fetch.resolves(bridgeSuccessResponse);
+    const res = await miniApp.fetch(bridgeSuccessResponse.url);
+    const resBuffer = await res.arrayBuffer();
+    expect(resBuffer).be.equal(res.body.buffer);
+  });
+
+  it('should return network error', () => {
+    const networkError = 'network error';
+    window.MiniAppBridge.fetch.rejects(networkError);
+    expect(miniApp.fetch(bridgeSuccessResponse.url)).be.rejectedWith(
+      networkError
+    );
+  });
+
+  it('should return API provider error response', async () => {
+    window.MiniAppBridge.fetch.resolves(bridgeErrorResponse);
+    const res = await miniApp.fetch(bridgeSuccessResponse.url);
+    expect(res.ok).be.equal(false);
+    expect(await res.json()).be.deep.equal(errorResBody);
   });
 });
 
