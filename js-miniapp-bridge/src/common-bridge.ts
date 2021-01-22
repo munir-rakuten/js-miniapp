@@ -193,6 +193,21 @@ export class MiniAppBridge {
   }
 
   /**
+   * Associating showBannerAd function to MiniAppBridge object.
+   * @param {string} id ad unit id of the Banner ad that will be shown.
+   */
+  showBannerAd(id: string) {
+    return new Promise<string>((resolve, reject) => {
+      return this.executor.exec(
+        'showAd',
+        { adType: AdTypes.BANNER, adUnitId: id },
+        appearSuccess => resolve(appearSuccess),
+        error => reject(error)
+      );
+    });
+  }
+
+  /**
    * Associating requestCustomPermissions function to MiniAppBridge object
    * @param [CustomPermissionType[] permissionTypes, Types of custom permissions that are requested
    * using an Array including the parameters eg. name, description.

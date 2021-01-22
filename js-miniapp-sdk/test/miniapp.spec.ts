@@ -21,20 +21,21 @@ const window: any = {};
 (global as any).window = window;
 
 window.MiniAppBridge = {
-  getUniqueId: sandbox.stub(),
-  requestPermission: sandbox.stub(),
-  requestCustomPermissions: sandbox.stub(),
-  loadInterstitialAd: sandbox.stub(),
-  loadRewardedAd: sandbox.stub(),
-  showInterstitialAd: sandbox.stub(),
-  showRewardedAd: sandbox.stub(),
-  shareInfo: sandbox.stub(),
-  getPlatform: sandbox.stub(),
-  getUserName: sandbox.stub(),
-  getProfilePhoto: sandbox.stub(),
-  getContacts: sandbox.stub(),
-  getAccessToken: sandbox.stub(),
-  setScreenOrientation: sandbox.stub(),
+  getUniqueId: sinon.stub(),
+  requestPermission: sinon.stub(),
+  requestCustomPermissions: sinon.stub(),
+  loadInterstitialAd: sinon.stub(),
+  loadRewardedAd: sinon.stub(),
+  showBannerAd: sinon.stub(),
+  showInterstitialAd: sinon.stub(),
+  showRewardedAd: sinon.stub(),
+  shareInfo: sinon.stub(),
+  getPlatform: sinon.stub(),
+  getUserName: sinon.stub(),
+  getProfilePhoto: sinon.stub(),
+  getContacts: sinon.stub(),
+  getAccessToken: sinon.stub(),
+  setScreenOrientation: sinon.stub(),
 };
 const miniApp = new MiniApp();
 
@@ -152,6 +153,26 @@ describe('requestCustomPermissions', () => {
         status: CustomPermissionStatus.ALLOWED,
       },
     ]);
+  });
+});
+
+describe('showBannerAd', () => {
+  it('should retrieve appeared succcess response for banner ad from the Mini App Bridge', () => {
+    const response = 'appeared';
+
+    const adUnitId = 'xxx-xxx-xxxxxxxxxxxxx';
+
+    window.MiniAppBridge.showBannerAd.resolves(response);
+    return expect(miniApp.showBannerAd(adUnitId)).to.eventually.equal(response);
+  });
+
+  it('should retrive error response from the Mini App Bridge', () => {
+    const error = 'error';
+
+    const adUnitId = 'xxx-xxx-xxxxxxxxxxxxx';
+
+    window.MiniAppBridge.showBannerAd.resolves(error);
+    return expect(miniApp.showBannerAd(adUnitId)).to.eventually.equal(error);
   });
 });
 

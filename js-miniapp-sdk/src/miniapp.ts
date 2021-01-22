@@ -91,6 +91,14 @@ interface Ad {
   loadRewardedAd(id: string): Promise<string>;
 
   /**
+   * Shows the Banner Ad for the specified ID.
+   * Promise is resolved after the banner ad is shown.
+   * @returns The Promise of successfully appeared response.
+   * Promise is rejected if the Ad failed to display MiniApp.showBannerAd.
+   */
+  showBannerAd(id: string): Promise<string>;
+
+  /**
    * Shows the Interstitial Ad for the specified ID.
    * Promise is resolved after the user closes the Ad.
    * @returns The Promise of close success response.
@@ -223,6 +231,10 @@ export class MiniApp implements MiniAppFeatures, Ad, Platform {
 
   loadRewardedAd(id: string): Promise<string> {
     return getBridge().loadRewardedAd(id);
+  }
+
+  showBannerAd(id: string): Promise<string> {
+    return getBridge().showBannerAd(id);
   }
 
   showInterstitialAd(id: string): Promise<string> {
